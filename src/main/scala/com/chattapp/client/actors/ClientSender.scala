@@ -1,4 +1,4 @@
-package com.chattapp.client
+package com.chattapp.client.actors
 
 import java.net.InetSocketAddress
 
@@ -6,25 +6,23 @@ import akka.actor.{Actor, ActorSystem, Kill}
 import akka.io.Tcp._
 import akka.io.{IO, Tcp}
 import akka.util.ByteString
-import com.chattapp.client.ClientMessage.SendMessage
+import com.chattapp.messages.{Message, MessageSentSuccess, SendMessage}
 
-class Client(address: InetSocketAddress, actorSystem: ActorSystem) extends Actor {
+class ClientSender(address: InetSocketAddress, actorSystem: ActorSystem,
+                   callback:Message => Unit) extends Actor{
   IO(Tcp)(actorSystem) ! Connect(address)
 
   def receive = {
-    case CommandFailed(command: Tcp.Command) =>
-      println("Failed to connect to " + address.toString)
+    case CommandFailed(_: Tcp.Command) =>
       self ! Kill
       actorSystem.terminate()
-    case Connected(remote, local) =>
-      println("Successfully connected to " + address)
+    case Connected(_, _) =>
       val connection = sender()
       connection ! Register(self)
       context become {
-        case Received(data) =>
-          println(data.decodeString("US-ASCII"))
         case SendMessage(message) =>
           connection ! Write(ByteString(message))
+          callback(MessageSentSuccess())
       }
   }
 

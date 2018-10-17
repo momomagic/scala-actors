@@ -3,24 +3,46 @@ package com.chattapp.client
 import java.net.InetSocketAddress
 
 import akka.actor.{ActorSystem, Props}
-import com.chattapp.client.ClientMessage.SendMessage
+import com.chattapp.client.actors.{ClientReader, ClientSender}
+import com.chattapp.messages._
 
 object ClientMain extends App {
-  val port = 18573
+  val portSpeaking = 18573
+  val portListening = 18572
 
   val system = ActorSystem("ClientMain")
-  val clientConnection = system.actorOf(Props(new Client(new InetSocketAddress("localhost",port), system)))
-  val bufferedReader = io.Source.stdin.bufferedReader()
-  loop("")
+  val clientSpeaking = system.actorOf(Props(new ClientSender(new InetSocketAddress("localhost",portSpeaking), system,callbackFromSender)))
+  val clientListening = system.actorOf(Props(new ClientReader(new InetSocketAddress("localhost",portListening),system,callbackFromReader)))
 
-  def loop(message: String): Boolean = message match {
-    case "~quit" =>
+  val bufferedReader = io.Source.stdin.bufferedReader()
+  loop(EmptyMessage())
+
+  def loop(message: Message): Boolean = message match {
+    case OrderMessage(keyword) if keyword == "~quit" =>
       system.terminate()
       false
-    case _ =>
+    case EmptyMessage() =>
       val message = bufferedReader.readLine()
-      clientConnection ! SendMessage(message)
-      loop(message)
+      clientSpeaking ! SendMessage(message)
+      loop(EmptyMessage())
+  }
+
+  def callbackFromReader(message: Message): Unit= {
+    message match {
+      case ReadMessage(message: String) =>
+        print(message)
+
+    }
+  }
+
+  def callbackFromSender(message: Message): Unit = {
+    message match {
+      case MessageSentSuccess() =>
+        print("message successfully sent")
+    }
   }
 
 }
+
+
+
