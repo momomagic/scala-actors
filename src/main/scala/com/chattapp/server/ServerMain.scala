@@ -16,14 +16,13 @@ object ServerMain extends App {
       case QuitClientMessage(name: String) =>
         quit(name)
       case SendClientMessageToAll(message: String,serverMessage: Boolean) =>
-        this.sender ! SendMessageToAll(activeClientsSpeaking.values.toList,message,serverMessage)
+        this.sender ! SendMessageToAll(activeClientsListening.values.toList,message,serverMessage)
     }
   }
 
   def callbackFromSender(message: Message): Unit = {
     message match {
       case MessageSentSuccess() =>
-        print("message successfully sent")
       case NewClientListening(name: String, actor: ActorRef) =>
         activeClientsListening += (name -> actor)
       case QuitClientMessage(name: String) =>

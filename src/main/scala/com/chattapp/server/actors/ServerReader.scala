@@ -15,13 +15,11 @@ class ServerReader(actorSystem: ActorSystem, portGiven: Int, callback:Message =>
 
   override def receive: Receive = {
     case CommandFailed(_: Bind) =>
-      println("Failed to start listening on " + server + ":" + portGiven)
       context stop self
       actorSystem.terminate()
 
     case Bound(localAddress: InetSocketAddress) =>
       println("Started listening on " + localAddress)
-
     case Connected(_, _) =>
       callback(NewClientSpeaking(sender.path.name, sender))
       sender ! Register(self)

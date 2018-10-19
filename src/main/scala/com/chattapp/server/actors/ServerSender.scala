@@ -15,7 +15,6 @@ class ServerSender(actorSystem: ActorSystem,portGiven: Int,callback:Message => U
   IO(Tcp)(actorSystem) ! Bind(self, new InetSocketAddress(this.server, this.portGiven))
   override def receive: Receive = {
     case CommandFailed(_: Bind) =>
-      println("Failed to start listening on " + server + ":" + portGiven)
       context stop self
       actorSystem.terminate()
 

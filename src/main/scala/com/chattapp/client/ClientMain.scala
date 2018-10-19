@@ -30,7 +30,7 @@ object ClientMain extends App {
   def callbackFromReader(message: Message): Unit= {
     message match {
       case ReadMessage(message: String) =>
-        print(message)
+        println("message " + message)
 
     }
   }
@@ -38,7 +38,6 @@ object ClientMain extends App {
   def callbackFromSender(message: Message): Unit = {
     message match {
       case MessageSentSuccess() =>
-        print("message successfully sent")
     }
   }
 
